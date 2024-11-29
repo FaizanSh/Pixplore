@@ -4,15 +4,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-module "landing_page_lambda" {
-  source          = "./modules/lambda/landing-page"
-  function_name   = "Landing_Page"
-  runtime         = "python3.10"
-  handler         = "main.handler"
-  filename        = "${path.module}/modules/lambda/landing-page/landingPage.zip"
-  source_code_hash = filebase64sha256("${path.module}/modules/lambda/landing-page/landingPage.zip")
-}
-
 module "image_metadata_lambda" {
   source          = "./modules/lambda/image-data"
   function_name   = "Image_Metadata_Reader"
@@ -49,7 +40,6 @@ module "image_analysis_lambda" {
   event_bus                      = aws_cloudwatch_event_bus.image_content_bus.name
   default_max_call_attempts      = "3"
 }
-
 
 # EventBridge
 module "eventbridge" {
@@ -97,6 +87,25 @@ module "cloudfront" {
   price_class             = "PriceClass_100"
 }
 
+module "cognito" {
+  source           = "./modules/cognito"
+  region           = "us-east-1"
+  cognito_callback_url    = "https://vrq1p5xkr6.execute-api.us-east-1.amazonaws.com/prod/landing-page"
+  cognito_logout_url      = "https://pixplore-user-pool-1.auth.us-east-1.amazoncognito.com/login?client_id=3cvgtrv35uvlu8oft4iauhede1&response_type=code&scope=email+openid+profile&redirect_uri=https%3A%2F%2Fvrq1p5xkr6.execute-api.us-east-1.amazonaws.com%2Fprod%2Flanding-page"
+}
+
+module "landing_page_lambda" {
+  source          = "./modules/lambda/landing-page"
+  function_name   = "Landing_Page_Lambda"
+  runtime          = "nodejs18.x" 
+  handler         = "main.handler"
+  filename        = "${path.module}/modules/lambda/landing-page/landingPage.zip"
+  source_code_hash = filebase64sha256("${path.module}/modules/lambda/landing-page/landingPage.zip")
+  cognito_client_id = module.cognito.user_pool_client_id
+  cognito_client_secret = module.cognito.cognito_client_secret
+  cognito_token_url = module.cognito.cognito_token_url
+}
+
 module "api_gateway" {
   source = "./modules/api_gateway"
   region = "us-east-1"
@@ -115,8 +124,12 @@ module "api_gateway" {
     module.image_analysis_lambda.lambda_invoke_arn,
     ]
   lambda_paths = ["landing-page", "image-data", "upload-photo", "image-queue", "image-analyse"]
-  # lambda_paths = ["landing-page", "image-data", "upload-photo", "image-queue"]
+
+  cognito_user_pool_client_id = module.cognito.user_pool_client_id
+  cognito_user_pool_issuer    = module.cognito.user_pool_issuer
+  cognito_user_pool_arn       = module.cognito.user_pool_arn
 }
+
 
 module "ecs_service" {
   source          = "./modules/ecs_service"
@@ -133,6 +146,6 @@ module "ecs_service" {
   landing_page_lambda_target_group_arn = module.landing_page_lambda.target_group_arn
 }
 
-output "api_gateway_urls" {
-  value = module.api_gateway.api_gateway_urls
+output "url" {
+  value = module.api_gateway.api_endpoint
 }

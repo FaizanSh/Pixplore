@@ -14,3 +14,18 @@ variable "lambda_names" {
 variable "lambda_invoke_arns" {
   description = "ARNs for each Lambda function in the API Gateway"
 }
+
+variable "cognito_user_pool_client_id" {
+  type = string
+  description = "The Cognito User Pool Client ID"
+}
+
+variable "cognito_user_pool_issuer" {
+  type = string
+  description = "The Cognito User Pool Issuer URL"
+}
+
+variable "cognito_user_pool_arn" {
+  type = string
+  description = "The Cognito User Pool ARN"
+}
