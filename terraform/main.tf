@@ -130,6 +130,22 @@ module "api_gateway" {
   cognito_user_pool_arn       = module.cognito.user_pool_arn
 }
 
+
+module "ecs_service" {
+  source          = "./modules/ecs_service"
+  region          = "us-east-1"
+  cluster_name    = "fastapi-cluster"
+  repository_name = "fastapi-repo-v2"
+  task_family     = "fastapi-task"
+  task_cpu        = "256"
+  task_memory     = "512"
+  vpc_id          = "vpc-0eb6c32c3c0c8c507"
+  subnet_ids      = ["subnet-0bfd390eabc57e9ef", "subnet-04bfb1b82a4ba8608"]
+  desired_count   = 1
+  upload_photo_lambda_target_group_arn = module.upload_photo_lambda.target_group_arn
+  landing_page_lambda_target_group_arn = module.landing_page_lambda.target_group_arn
+}
+
 output "url" {
   value = module.api_gateway.api_endpoint
 }
