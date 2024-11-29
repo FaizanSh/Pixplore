@@ -4,6 +4,8 @@ provider "aws" {
   region = "us-east-1"
 }
 
+data "aws_caller_identity" "current" {}
+
 module "image_metadata_lambda" {
   source          = "./modules/lambda/image-data"
   function_name   = "Image_Metadata_Reader"
@@ -20,7 +22,7 @@ module "upload_photo_lambda" {
   handler                        = "main.handler"
   filename                       = "${path.module}/modules/lambda/upload-photo/getSignedUrl.zip"
   source_code_hash               = filebase64sha256("${path.module}/modules/lambda/upload-photo/getSignedUrl.zip")
-  images_bucket                  = "pixplore-s3"
+  images_bucket                  = module.s3_bucket.bucket_name
   default_signedurl_expiry_seconds = "3600"
 }
 
@@ -36,7 +38,7 @@ module "image_analysis_lambda" {
   filename                       = "${path.module}/modules/lambda/image-analyse/imageAnalysis.zip"
   source_code_hash               = filebase64sha256("${path.module}/modules/lambda/image-analyse/imageAnalysis.zip")
   region                         = "us-east-1"
-  images_bucket                  = "pixplore-s3"
+  images_bucket                  = module.s3_bucket.bucket_name
   event_bus                      = aws_cloudwatch_event_bus.image_content_bus.name
   default_max_call_attempts      = "3"
 }
@@ -70,9 +72,9 @@ module "image_queue_lambda" {
 
 module "s3_bucket" {
   source = "./modules/s3"
-  bucket_name = "pixplore-s3"
+  bucket_name = "pixplore-s3-${data.aws_caller_identity.current.account_id}"
   tags = {
-    Name = "pixplore-s3"
+    Name = "pixplore-s3-1"
   }
   versioning = false
 }

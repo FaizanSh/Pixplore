@@ -13,7 +13,7 @@ variable "user_pool_name" {
 variable "user_pool_domain" {
     description = "The domain of the Cognito user pool"
     type        = string
-    default     = "pixplore-user-pool-1"
+    default     = "pixplore-user-pool-2"
 }
 
 variable "user_pool_client_name" {

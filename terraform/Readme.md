@@ -22,3 +22,6 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 docker build -t fastapi-repo-v2 .
 docker tag fastapi-repo-v2:latest <accountid>.dkr.ecr.us-east-1.amazonaws.com/fastapi-repo-v2:latest
 docker push <accountid>.dkr.ecr.us-east-1.amazonaws.com/fastapi-repo-v2:latest
+
+aws ecr describe-repositories --repository-names fastapi-repo-v2
+terraform import module.ecs_service.aws_ecr_repository.fastapi_repo fastapi-repo-v2

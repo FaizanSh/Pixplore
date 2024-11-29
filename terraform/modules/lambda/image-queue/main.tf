@@ -28,7 +28,7 @@ resource "aws_iam_policy" "s3_sqs_access_policy" {
           "s3:PutObject",
           "s3:DeleteObject"
         ],
-        Resource = "arn:aws:s3:::Pixplore-S3/*"
+        Resource = "arn:aws:s3:::Pixplore-S3-1/*"
       },
       {
         Effect = "Allow",

@@ -17,3 +17,8 @@ output "role_arn" {
   description = "IAM Role ARN for the Lambda execution"
   value       = aws_iam_role.lambda_execution_role.arn
 }
+
+output "target_group_arn" {
+  description = "ARN of the Target Group"
+  value       = aws_lb_target_group.landing_tg.arn
+}
