@@ -73,5 +73,5 @@ resource "aws_lb_target_group_attachment" "upload_photo_tg_attachment" {
   target_group_arn = aws_lb_target_group.upload_photo_tg.arn
   target_id        = aws_lambda_function.this.arn
 
-  # depends_on = [aws_lambda_permission.allow_elb_to_invoke_upload_photo]
+  depends_on = [aws_lambda_permission.elb_invoke_permission]
 }
