@@ -8,7 +8,7 @@ resource "aws_iam_role" "lambda_execution_role" {
         Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
-          Service = ["lambda.amazonaws.com","elasticloadbalancing.amazonaws.com"]
+          Service = "lambda.amazonaws.com"
         }
       }
     ]
@@ -53,25 +53,4 @@ resource "aws_lambda_function" "this" {
       DEFAULT_SIGNEDURL_EXPIRY_SECONDS = var.default_signedurl_expiry_seconds
     }
   }
-}
-
-
-resource "aws_lb_target_group" "upload_photo_tg" {
-  name        = "upload-photo-tg"  # Name of the Target Group
-  target_type = "lambda"             # Specify that the target is a Lambda function
-}
-
-resource "aws_lambda_permission" "elb_invoke_permission" {
-  statement_id  = "AllowExecutionFromELB"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.upload_photo_tg.arn
-}
-
-resource "aws_lb_target_group_attachment" "upload_photo_tg_attachment" {
-  target_group_arn = aws_lb_target_group.upload_photo_tg.arn
-  target_id        = aws_lambda_function.this.arn
-
-  # depends_on = [aws_lambda_permission.allow_elb_to_invoke_upload_photo]
 }
