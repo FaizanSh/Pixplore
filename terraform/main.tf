@@ -165,17 +165,33 @@ module "ecs_service" {
   upload_photo_lambda_target_group_arn = module.upload_photo_lambda.target_group_arn
   landing_page_lambda_target_group_arn = module.landing_page_lambda.target_group_arn
 }
-resource "null_resource" "update_lambda_environment" {
-  triggers = {
-    api_url = module.api_gateway.api_endpoint
-  }
 
-  provisioner "local-exec" {
-    command = <<EOT
-      aws lambda update-function-configuration --function-name ${module.landing_page_lambda.lambda_name} --environment Variables={API_URL=${module.api_gateway.api_endpoint}}
-    EOT
-  }
-}
+# resource "null_resource" "update_lambda_environment" {
+#   triggers = {
+#     api_url = module.api_gateway.api_endpoint
+#   }
+
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       # Fetch existing environment variables
+#       EXISTING_ENV=$(aws lambda get-function-configuration \
+#         --function-name ${module.landing_page_lambda.lambda_name} \
+#         --query "Environment.Variables" \
+#         --output json) && \
+
+#       # Merge the new variable with the existing ones
+#       UPDATED_ENV=$(echo $EXISTING_ENV | jq '. + {"API_URL": "${module.api_gateway.api_endpoint}"}') && \
+
+#       # Update Lambda with the merged environment variables
+#       aws lambda update-function-configuration \
+#         --function-name ${module.landing_page_lambda.lambda_name} \
+#         --environment "Variables=$UPDATED_ENV"
+#     EOT
+#   }
+
+#   depends_on = [module.api_gateway]
+# }
+
 output "url" {
   value = module.api_gateway.api_endpoint
 }
