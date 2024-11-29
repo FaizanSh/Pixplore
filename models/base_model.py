@@ -1,4 +1,9 @@
 from pydantic import BaseModel
 
-class HelloResponse(BaseModel):
-    message: str
+# Pydantic model for input validation
+class SearchEvent(BaseModel):
+    label: str
+    country: Optional[str] = None
+    language: Optional[str] = None
+
+
