@@ -1,7 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from service.main_service import get_hello_message
 from helpers import search_label
 
 router = APIRouter()

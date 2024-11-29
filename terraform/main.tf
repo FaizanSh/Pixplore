@@ -6,6 +6,15 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-bucket-unique-faizanullah-lab"
+    key            = "pixplore/terraform/state/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+  }
+}
+
 module "image_metadata_lambda" {
   source          = "./modules/lambda/image-data"
   function_name   = "Image_Metadata_Reader"
@@ -92,8 +101,10 @@ module "cloudfront" {
 module "cognito" {
   source           = "./modules/cognito"
   region           = "us-east-1"
-  cognito_callback_url    = "https://vrq1p5xkr6.execute-api.us-east-1.amazonaws.com/prod/landing-page"
-  cognito_logout_url      = "https://pixplore-user-pool-1.auth.us-east-1.amazoncognito.com/login?client_id=3cvgtrv35uvlu8oft4iauhede1&response_type=code&scope=email+openid+profile&redirect_uri=https%3A%2F%2Fvrq1p5xkr6.execute-api.us-east-1.amazonaws.com%2Fprod%2Flanding-page"
+  cognito_callback_url    = "${module.api_gateway.api_endpoint}/prod/landing-page"
+  user_pool_domain = "pixplore-user-pool-${data.aws_caller_identity.current.account_id}"
+  cognito_logout_url = "https://pixplore-user-pool-3.auth.us-east-1.amazoncognito.com/login"
+  # cognito_logout_url      = "https://pixplore-user-pool-1.auth.us-east-1.amazoncognito.com/login?client_id=3cvgtrv35uvlu8oft4iauhede1&response_type=code&scope=email+openid+profile&redirect_uri=https%3A%2F%2Fvrq1p5xkr6.execute-api.us-east-1.amazonaws.com%2Fprod%2Flanding-page"
 }
 
 module "landing_page_lambda" {
@@ -158,3 +169,7 @@ module "ecs_service" {
 output "url" {
   value = module.api_gateway.api_endpoint
 }
+# output cognito URL
+# output "cognito_url" {
+#   value = module.cognito.cognito_url
+# }
