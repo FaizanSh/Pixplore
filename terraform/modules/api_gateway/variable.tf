@@ -29,3 +29,9 @@ variable "cognito_user_pool_arn" {
   type = string
   description = "The Cognito User Pool ARN"
 }
+
+variable "ecs_alb_dns_name" {
+  type = string
+  description = "The DNS name of the Application Load Balancer"
+  
+}

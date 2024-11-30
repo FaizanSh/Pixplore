@@ -37,6 +37,21 @@ resource "aws_apigatewayv2_route" "routes" {
   authorizer_id = count.index == 0 ? null : aws_apigatewayv2_authorizer.cognito_authorizer.id
 }
 
+resource "aws_apigatewayv2_route" "search_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /search"
+
+  target = "integrations/${aws_apigatewayv2_integration.load_balancer_integration.id}"
+  authorizer_id = aws_apigatewayv2_authorizer.cognito_authorizer.id # remove this if you don't want to authenticate your API calls
+}
+
+resource "aws_apigatewayv2_integration" "load_balancer_integration" {
+  api_id            = aws_apigatewayv2_api.http_api.id
+  integration_type  = "HTTP_PROXY"
+  integration_uri   = "http://${var.ecs_alb_dns_name}/search" # Use the Load Balancer's DNS name
+  integration_method = "ANY"
+}
+
 # Define integrations for each Lambda
 resource "aws_apigatewayv2_integration" "lambda_integrations" {
   count             = 5
@@ -63,6 +78,13 @@ resource "aws_lambda_permission" "allow_api_gateway" {
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
+# # Define an integration for the Load Balancer
+# resource "aws_apigatewayv2_integration" "load_balancer_integration" {
+#   api_id            = aws_apigatewayv2_api.http_api.id
+#   integration_type  = "HTTP_PROXY"
+#   integration_uri   = aws_lb.ecs_alb.dns_name # Use the Load Balancer's DNS name
+#   integration_method = "ANY"
+# }
 
 # # Define the API Gateway
 # resource "aws_api_gateway_rest_api" "api" {

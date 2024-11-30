@@ -20,3 +20,4 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 # docker build -t fastapi-app .
 # docker run -d -p 8000:8000 fastapi-app
 # docker logs -f 913f0669c01ad22657477188d3f95f9f70d344aab3ed80cc6272b0a5e937f51d
+# aws ecs update-service --cluster fastapi-cluster --service fastapi-service --force-new-deployment

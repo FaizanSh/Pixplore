@@ -7,6 +7,18 @@ import logging
 import service.main_service as main
 router = APIRouter()
 
+# health check
+@router.get("/", response_model=dict, summary="Health Check", description="Basic health check to ensure the service is running.")
+def read_root():
+    """
+    Basic health check to ensure the service is running.
+
+    Returns:
+        dict: Response message.
+    """
+    return {"message": "Service is running."}
+
+
 @router.get("/search", response_model=dict, summary="Search by label", description="Search for a label with optional filters for country and language.")
 def search(event: SearchEvent):
     """

@@ -119,6 +119,21 @@ module "landing_page_lambda" {
   cognito_token_url = module.cognito.cognito_token_url
 }
 
+module "ecs_service" {
+  source          = "./modules/ecs_service"
+  region          = "us-east-1"
+  cluster_name    = "fastapi-cluster"
+  repository_name = "fastapi-repo-v2"
+  task_family     = "fastapi-task"
+  task_cpu        = "256"
+  task_memory     = "512"
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.public_subnet_ids
+  desired_count   = 1
+  upload_photo_lambda_target_group_arn = module.upload_photo_lambda.target_group_arn
+  landing_page_lambda_target_group_arn = module.landing_page_lambda.target_group_arn
+}
+
 module "api_gateway" {
   source = "./modules/api_gateway"
   region = "us-east-1"
@@ -141,6 +156,8 @@ module "api_gateway" {
   cognito_user_pool_client_id = module.cognito.user_pool_client_id
   cognito_user_pool_issuer    = module.cognito.user_pool_issuer
   cognito_user_pool_arn       = module.cognito.user_pool_arn
+
+  ecs_alb_dns_name = module.ecs_service.alb_dns_name
 }
 
 module "vpc" {
@@ -149,21 +166,6 @@ module "vpc" {
   public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
   azs                = ["us-east-1a", "us-east-1b"]
   vpc_name           = "fastapi-vpc"
-}
-
-module "ecs_service" {
-  source          = "./modules/ecs_service"
-  region          = "us-east-1"
-  cluster_name    = "fastapi-cluster"
-  repository_name = "fastapi-repo-v2"
-  task_family     = "fastapi-task"
-  task_cpu        = "256"
-  task_memory     = "512"
-  vpc_id          = module.vpc.vpc_id
-  subnet_ids      = module.vpc.public_subnet_ids
-  desired_count   = 1
-  upload_photo_lambda_target_group_arn = module.upload_photo_lambda.target_group_arn
-  landing_page_lambda_target_group_arn = module.landing_page_lambda.target_group_arn
 }
 
 # resource "null_resource" "update_lambda_environment" {
