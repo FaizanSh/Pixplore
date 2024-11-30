@@ -88,3 +88,6 @@ We welcome contributions from the community! If you'd like to contribute, please
 
 This project is licensed under the MIT License.
 
+### Image Building Steps
+
+`docker build -t fastapi-search:latest .`

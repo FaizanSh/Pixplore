@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from helpers import search_label
-
+from dotenv import load_dotenv
+load_dotenv()
+from helpers.utils import search_label
+from models.base_model import SearchEvent
+import logging
+import service.main_service as main
 router = APIRouter()
 
 @router.get("/search", response_model=dict, summary="Search by label", description="Search for a label with optional filters for country and language.")
@@ -15,11 +19,17 @@ def search(event: SearchEvent):
         dict: Response from the `search_label` helper function.
     """
     try:
+        logging.info(f"Searching for label: {event.label}")
         # Pass all parameters only if they are provided
         if event.country and event.language:
+            logging.info(f"Searching for label: {event.label} in {event.country} ({event.language})")
             response = search_label(event.label, event.country, event.language)
         else:
+            logging.info(f"Searching for label: {event.label}")
             response = search_label(event.label)
+
+        # response details
+        logging.info(response)
 
         # Handle empty responses or errors
         if not response:

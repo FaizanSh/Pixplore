@@ -1,14 +1,9 @@
-def format_message(message: str) -> str:
-    return f"Formatted message: {message}"
-
-
 import boto3
 import botocore
 import os
 import logging
 import json
-
-from helper import execute_statement, logger  # type: ignore
+from service.main_service import execute_statement, logger  # type: ignore
 
 aws_config = botocore.config.Config(
     region_name = os.getenv('REGION'),

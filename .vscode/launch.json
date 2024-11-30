@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch FastAPI App",
+            "program": "${workspaceFolder}/${input:programPath}",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "programPath",
+            "description": "Path to the main Python file"
+        }
+    ]
+}

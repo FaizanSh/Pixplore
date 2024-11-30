@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Optional
+
 
 # Pydantic model for input validation
 class SearchEvent(BaseModel):
