@@ -42,13 +42,13 @@ resource "aws_apigatewayv2_route" "search_route" {
   route_key = "GET /search"
 
   target = "integrations/${aws_apigatewayv2_integration.load_balancer_integration.id}"
-  # authorizer_id = aws_apigatewayv2_authorizer.cognito_authorizer.id
+  authorizer_id = aws_apigatewayv2_authorizer.cognito_authorizer.id # remove this if you don't want to authenticate your API calls
 }
 
 resource "aws_apigatewayv2_integration" "load_balancer_integration" {
   api_id            = aws_apigatewayv2_api.http_api.id
   integration_type  = "HTTP_PROXY"
-  integration_uri   = "https://${var.ecs_alb_dns_name}" # Use the Load Balancer's DNS name
+  integration_uri   = "http://${var.ecs_alb_dns_name}/search" # Use the Load Balancer's DNS name
   integration_method = "ANY"
 }
 
