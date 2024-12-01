@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
         // Parse incoming event
         const queryStringParameters = event.queryStringParameters || {};
         const code = queryStringParameters.code;
-        const redirectUri = "https://vrq1p5xkr6.execute-api.us-east-1.amazonaws.com/prod/landing-page"
+        const redirectUri = "https://nhwzwskhvh.execute-api.us-east-1.amazonaws.com/prod/landing-page"
 
         console.log("code: ", code)
         console.log("redirectUri: ", redirectUri)

@@ -6,14 +6,14 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
-terraform {
-  backend "s3" {
-    bucket         = "terraform-state-bucket-unique-faizanullah-lab"
-    key            = "pixplore/terraform/state/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-  }
-}
+# terraform {
+#   backend "s3" {
+#     bucket         = "terraform-state-bucket-unique-faizanullah-lab"
+#     key            = "pixplore/terraform/state/terraform.tfstate"
+#     region         = "us-east-1"
+#     encrypt        = true
+#   }
+# }
 
 module "image_metadata_lambda" {
   source          = "./modules/lambda/image-data"
