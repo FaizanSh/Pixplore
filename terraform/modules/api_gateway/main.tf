@@ -28,7 +28,7 @@ resource "aws_apigatewayv2_authorizer" "cognito_authorizer" {
 
 # Define routes for each Lambda function
 resource "aws_apigatewayv2_route" "routes" {
-  count           = 5 # Number of Lambda modules
+  count           = 3 # Number of Lambda modules
   api_id          = aws_apigatewayv2_api.http_api.id
   route_key       = count.index == 0 ? "GET /${var.lambda_paths[count.index]}" : "POST /${var.lambda_paths[count.index]}" # Dynamic routes
   target          = "integrations/${aws_apigatewayv2_integration.lambda_integrations[count.index].id}"
@@ -54,7 +54,7 @@ resource "aws_apigatewayv2_integration" "load_balancer_integration" {
 
 # Define integrations for each Lambda
 resource "aws_apigatewayv2_integration" "lambda_integrations" {
-  count             = 5
+  count             = 3
   api_id            = aws_apigatewayv2_api.http_api.id
   integration_type  = "AWS_PROXY"
   integration_uri   = var.lambda_invoke_arns[count.index]  # The ARN of the Lambda function
@@ -70,7 +70,7 @@ resource "aws_apigatewayv2_stage" "http_stage" {
 
 # Grant API Gateway permissions to invoke Lambda functions
 resource "aws_lambda_permission" "allow_api_gateway" {
-  count        = 5
+  count        = 3
   statement_id = "AllowAPIGatewayInvoke-${count.index}"
   action       = "lambda:InvokeFunction"
   function_name = var.lambda_names[count.index] # Dynamic Lambda names

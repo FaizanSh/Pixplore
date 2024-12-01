@@ -100,12 +100,12 @@
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("idToken", idToken);
 
-      var getSignedUrlEndpoint = window.location.href
-        .split("#")[0]
-        .replace("web", "signedUrl");
-      var searchImageEndpoint = window.location.href
-        .split("#")[0]
-        .replace("web", "search");
+      console.log(window.location.href);
+
+      var getSignedUrlEndpoint =
+        window.location.href.split("/prod")[0] + "/prod/upload-photo";
+      var searchImageEndpoint = "https://m82xphu4lf.execute-api.us-east-1.amazonaws.com/prod/search";
+        
       var loginPage = "###loginPage###";
       var logoutPage = loginPage.replace("login", "logout");
 
@@ -113,39 +113,52 @@
         window.location.replace(logoutPage);
       }
 
+
+
       function getSignedUrl() {
+        // Log the beginning of the AJAX request
+        console.log("Starting request to get signed URL...");
+      
         $.ajax({
           url: getSignedUrlEndpoint,
-          headers: { Authorization: idToken },
-          type: "GET",
+          headers: {
+            Authorization: idToken,
+          },
+          type: "POST",
           contentType: "application/json; charset=utf-8",
           success: function (result) {
-            console.log(result);
+            // Log the response from the server
+            console.log("Received response from getSignedUrlEndpoint:", result);
+            
+            // Log the URL and the fields being set on the form
+            console.log("Setting form action to:", result.url);
+            console.log("Setting form fields:");
+            console.log("key:", result.fields.key);
+            console.log("AWSAccessKeyId", result.fields["AWSAccessKeyId"]);
+            console.log("X-Amz-Security-Token:", result.fields["x-amz-security-token"]);
+            console.log("Policy:", result.fields.policy);
+            console.log("X-Amz-Signature:", result.fields["signature"]);
+      
+            // Updating form elements with received values
             $("#upload_image_form").attr("action", result.url);
             $('input[name="key"]').val(result.fields.key);
-            $('input[name="X-Amz-Credential"]').val(
-              result.fields["x-amz-credential"]
-            );
-            $('input[name="X-Amz-Algorithm"]').val(
-              result.fields["x-amz-algorithm"]
-            );
-            $('input[name="X-Amz-Date"]').val(result.fields["x-amz-date"]);
-            $('input[name="x-amz-security-token"]').val(
-              result.fields["x-amz-security-token"]
-            );
-            $('input[name="Policy"]').val(result.fields.policy);
-            $('input[name="X-Amz-Signature"]').val(
-              result.fields["x-amz-signature"]
-            );
+            $('input[name="AWSAccessKeyId"]').val(result.fields["AWSAccessKeyId"]);
+            $('input[name="x-amz-security-token"]').val(result.fields["x-amz-security-token"]);
+            $('input[name="policy"]').val(result.fields.policy);
+            $('input[name="signature"]').val(result.fields["signature"]);
           },
           error: function (error) {
-            console.log(error);
+            // Log the error if there’s an issue with the request
+            console.log("Error occurred during AJAX request:", error);
+      
             if (error.status == 401) {
+              console.log("Unauthorized request. Logging out...");
               logout();
             }
           },
         });
       }
+      
 
       function listImagesByLabel(outputTab, label, language, country) {
         console.log("Finding images with label: " + label);
@@ -156,20 +169,24 @@
           url: searchImageEndpoint,
           headers: { Authorization: idToken },
           type: "POST",
-          data: { ...formData, source: "API" },
+          data: JSON.stringify({ ...formData, source: "API" }),
           contentType: "application/json; charset=utf-8",
           success: function (results) {
             console.log(results);
+            console.log({ ...formData, source: "API" },)
             $(outputTab + " tr").remove();
             $(outputTab + " th").remove();
             if (results) {
+              var results_body = JSON.parse(results.body);
               $(outputTab).append("<tr><th>Image ID</th></tr>");
-              results.forEach((item) => {
+              results_body.forEach((item) => {
                 $(outputTab).append("<tr><td>" + item.id + "</th></tr>");
               });
             }
           },
           error: function (error) {
+            console.log("here")
+            console.log({ ...formData, source: "API" },)
             console.log(error.responseText, error.status);
             if (error.status == 401) {
               logout();
@@ -180,7 +197,7 @@
 
       $(document).ready(function () {
         if (window.location.hash) {
-          // getSignedUrl();
+          //getSignedUrl();
         } else {
           console.log("Authorization information from cognito is not found!");
         }
@@ -235,7 +252,11 @@
           });
 
         formData.append("file", selectedFile.files[0]);
-
+        // Log the content of formData for debugging
+        console.log("FormData content:");
+        for (var pair of formData.entries()) {
+          console.log(pair[0] + ": ", pair[1]);
+        }
         $.ajax({
           url: $("#upload_image_form").attr("action"),
           type: "POST",
@@ -291,12 +312,10 @@
           enctype="multipart/form-data"
         >
           <input type="hidden" name="key" /><br />
-          <input type="hidden" name="X-Amz-Credential" />
-          <input type="hidden" name="X-Amz-Algorithm" />
-          <input type="hidden" name="X-Amz-Date" />
+          <input type="hidden" name="AWSAccessKeyId" /><br />
           <input type="hidden" name="x-amz-security-token" />
-          <input type="hidden" name="Policy" />
-          <input type="hidden" name="X-Amz-Signature" />
+          <input type="hidden" name="policy" />
+          <input type="hidden" name="signature" />
           <input type="file" id="file_select" name="file" /> <br />
           <input
             type="submit"

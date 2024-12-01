@@ -4,7 +4,7 @@ variable "region" {
 
 variable "lambda_paths" {
   description = "Paths for each Lambda function in the API Gateway"
-  default     = ["landing-page", "image-data", "upload-photo", "image-analyse", "image-massage"]
+  default     = ["landing-page", "upload-photo", "image-analysis"]
 }
 
 variable "lambda_names" {

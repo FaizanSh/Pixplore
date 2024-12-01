@@ -8,20 +8,11 @@ data "aws_caller_identity" "current" {}
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-state-bucket-unique-faizanullah-lab"
-    key            = "pixplore/terraform/state/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
+    bucket         = "terraform-state-bucket-ibrahim-01" # Your new bucket
+    key            = "pixplore/terraform/state/terraform.tfstate" # State file path in the bucket
+    region         = "us-east-1" # S3 bucket region
+    encrypt        = true        # Enable encryption for the state file
   }
-}
-
-module "image_metadata_lambda" {
-  source          = "./modules/lambda/image-data"
-  function_name   = "Image_Metadata_Reader"
-  runtime         = "python3.10"
-  handler         = "main.handler"
-  filename        = "${path.module}/modules/lambda/image-data/imageData.zip"
-  source_code_hash = filebase64sha256("${path.module}/modules/lambda/image-data/imageData.zip")
 }
 
 module "upload_photo_lambda" {
@@ -39,49 +30,9 @@ resource "aws_cloudwatch_event_bus" "image_content_bus" {
   name = "ImageContentBus"
 }
 
-module "image_analysis_lambda" {
-  source                         = "./modules/lambda/image-analyse"
-  function_name                  = "Image_Analysis_Lambda"
-  runtime                        = "python3.10"
-  handler                        = "main.handler"
-  filename                       = "${path.module}/modules/lambda/image-analyse/imageAnalysis.zip"
-  source_code_hash               = filebase64sha256("${path.module}/modules/lambda/image-analyse/imageAnalysis.zip")
-  region                         = "us-east-1"
-  images_bucket                  = module.s3_bucket.bucket_name
-  event_bus                      = aws_cloudwatch_event_bus.image_content_bus.name
-  default_max_call_attempts      = "3"
-}
-
-# EventBridge
-module "eventbridge" {
-  source               = "./modules/eventbridge"
-  event_bus_name       = "ImageContentBus"
-  event_rule_name      = "Pixplore-ImageRule"
-  event_rule_description = "The event from image analyzer to store the data"
-  event_pattern        = jsonencode({
-    resources = [
-      module.image_analysis_lambda.lambda_arn
-    ]
-  })
-  target_lambda_arn    = module.image_metadata_lambda.lambda_arn
-  target_lambda_name   = module.image_metadata_lambda.lambda_name
-
-}
-
-module "image_queue_lambda" {
-  source                         = "./modules/lambda/image-queue"
-  function_name                  = "Image_Queue_Lambda"
-  runtime                        = "python3.10"
-  handler                        = "main.handler"
-  region                         = "us-east-1"
-  filename                       = "${path.module}/modules/lambda/image-queue/imageQueue.zip"
-  source_code_hash               = filebase64sha256("${path.module}/modules/lambda/image-queue/imageQueue.zip")
-  queue_name                     = "Pixplore-SQS"
-}
-
 module "s3_bucket" {
   source = "./modules/s3"
-  bucket_name = "pixplore-s3-${data.aws_caller_identity.current.account_id}"
+  bucket_name = "image-processing-bucket-001"
   tags = {
     Name = "pixplore-s3-1"
   }
@@ -139,19 +90,21 @@ module "api_gateway" {
   region = "us-east-1"
   lambda_names = [
     module.landing_page_lambda.lambda_name,
-    module.image_metadata_lambda.lambda_name,
     module.upload_photo_lambda.lambda_name,
-    module.image_queue_lambda.lambda_name,
-    module.image_analysis_lambda.lambda_name,
+    module.image_analysis_lambda.lambda_name
+    # module.image_metadata_lambda.lambda_name,
+    # module.image_queue_lambda.lambda_name,
+    # module.image_analysis_lambda.lambda_name,
   ]
   lambda_invoke_arns = [
     module.landing_page_lambda.lambda_invoke_arn,
-    module.image_metadata_lambda.lambda_invoke_arn,
     module.upload_photo_lambda.lambda_invoke_arn,
-    module.image_queue_lambda.lambda_invoke_arn,
-    module.image_analysis_lambda.lambda_invoke_arn,
+    module.image_analysis_lambda.lambda_invoke_arn
+    # module.image_metadata_lambda.lambda_invoke_arn,
+    # module.image_queue_lambda.lambda_invoke_arn,
+    # module.image_analysis_lambda.lambda_invoke_arn,
     ]
-  lambda_paths = ["landing-page", "image-data", "upload-photo", "image-queue", "image-analyse"]
+  lambda_paths = ["landing-page", "upload-photo", "image-analysis"]
 
   cognito_user_pool_client_id = module.cognito.user_pool_client_id
   cognito_user_pool_issuer    = module.cognito.user_pool_issuer
@@ -168,36 +121,40 @@ module "vpc" {
   vpc_name           = "fastapi-vpc"
 }
 
-# resource "null_resource" "update_lambda_environment" {
-#   triggers = {
-#     api_url = module.api_gateway.api_endpoint
-#   }
-
-#   provisioner "local-exec" {
-#     command = <<EOT
-#       # Fetch existing environment variables
-#       EXISTING_ENV=$(aws lambda get-function-configuration \
-#         --function-name ${module.landing_page_lambda.lambda_name} \
-#         --query "Environment.Variables" \
-#         --output json) && \
-
-#       # Merge the new variable with the existing ones
-#       UPDATED_ENV=$(echo $EXISTING_ENV | jq '. + {"API_URL": "${module.api_gateway.api_endpoint}"}') && \
-
-#       # Update Lambda with the merged environment variables
-#       aws lambda update-function-configuration \
-#         --function-name ${module.landing_page_lambda.lambda_name} \
-#         --environment "Variables=$UPDATED_ENV"
-#     EOT
-#   }
-
-#   depends_on = [module.api_gateway]
-# }
 
 output "url" {
   value = module.api_gateway.api_endpoint
 }
-# output cognito URL
-# output "cognito_url" {
-#   value = module.cognito.cognito_url
-# }
+
+#---- Pipeline post bucket save -----
+
+module "sqs" {
+  source = "./modules/sqs"
+
+  lambda_execution_arn = module.image_analysis_lambda.lambda_execution_role_arn
+}
+
+module "image_analysis_lambda" {
+
+  source       = "./modules/lambda/image-analysis"
+  lambda_name  = "analyze_image_lambda-001"
+  s3_bucket    = module.s3_bucket.bucket_name
+  sqs_queue_arn = module.sqs.sqs_queue_arn
+}
+
+module "rekognition" {
+  source          = "./modules/rekognition"
+  lambda_name     = "sqs_to_rekognition_lambda"
+  sqs_queue_url   = module.sqs.sqs_queue_url
+  sqs_queue_arn   = module.sqs.sqs_queue_arn
+}
+
+output "sqs_queue_url" {
+  description = "The URL of the SQS queue"
+  value       = module.sqs.sqs_queue_url
+}
+
+output "rekognition_lambda_arn" {
+  description = "The ARN of the Rekognition Lambda function"
+  value       = module.rekognition.lambda_arn
+}

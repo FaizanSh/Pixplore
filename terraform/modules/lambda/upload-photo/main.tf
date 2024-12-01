@@ -1,5 +1,5 @@
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "upload_photo_lambda_execution_role"
+  name = "upload_photo_lambda_execution_role-new"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -16,7 +16,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name = "upload_photo_s3_access_policy"
+  name = "upload_photo_s3_access_policy-new"
 
   policy = jsonencode({
     Version = "2012-10-17",
